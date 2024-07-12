@@ -66,27 +66,27 @@ pub fn log_message(log_type: LogType, message: &'static str) {
 #[macro_export]
 macro_rules! info {
     ($message:expr) => {
-        $crate::log::log_message($crate::log::LogType::Info, $message);
+        $crate::logging::log_message($crate::logging::LogType::Info, $message);
     };
 }
 
 #[macro_export]
 macro_rules! warning {
     ($message:expr) => {
-        $crate::log::log_message($crate::log::LogType::Warning, $message);
+        $crate::logging::log_message($crate::logging::LogType::Warning, $message);
     };
 }
 
 #[macro_export]
 macro_rules! error {
     ($message:expr) => {
-        $crate::log::log_message($crate::log::LogType::Error, $message);
+        $crate::logging::log_message($crate::logging::LogType::Error, $message);
     };
 }
 
 #[macro_export]
 macro_rules! log {
     ($style:expr, $message:expr) => {
-        $crate::log::log_message($style, $message);
+        $crate::logging::log_message($style, $message);
     };
 }

@@ -4,6 +4,7 @@ pub enum LogType {
     Info,
     Warning,
     Error,
+    Fatal,
     Custom(LogStyle),
 }
 
@@ -12,24 +13,6 @@ pub struct LogStyle {
     pub color: Color,
     pub prefix: &'static str,
     pub color_message: bool,
-}
-
-impl LogType {
-    fn new_info() -> Self {
-        Self::Info
-    }
-
-    fn new_warning() -> Self {
-        Self::Warning
-    }
-
-    fn new_error() -> Self {
-        Self::Error
-    }
-
-    pub fn new_custom(style: LogStyle) -> Self {
-        Self::Custom(style)
-    }
 }
 
 pub fn log_message(log_type: LogType, message: &'static str) {
@@ -49,11 +32,18 @@ pub fn log_message(log_type: LogType, message: &'static str) {
             prefix: "[ERROR] ",
             color_message: false,
         },
+        LogType::Fatal => LogStyle {
+            color: Color::DarkRed,
+            prefix: "[FATAL] ",
+            color_message: true,
+        },
         LogType::Custom(style) => style,
     };
 
     let mut str = String::new();
+
     str.push_str(&style.prefix.with(style.color).to_string());
+
     if style.color_message {
         str.push_str(&message.with(style.color).to_string());
     } else {
@@ -81,6 +71,13 @@ macro_rules! warning {
 macro_rules! error {
     ($message:expr) => {
         $crate::logging::log_message($crate::logging::LogType::Error, $message);
+    };
+}
+
+#[macro_export]
+macro_rules! fatal {
+    ($message:expr) => {
+        $crate::logging::log_message($crate::logging::LogType::Fatal, $message);
     };
 }
 

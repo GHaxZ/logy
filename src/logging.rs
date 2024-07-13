@@ -10,33 +10,101 @@ pub enum LogType {
 
 #[derive(Clone)]
 pub struct LogStyle {
-    pub color: Color,
-    pub prefix: &'static str,
-    pub color_message: bool,
+    color: Color,
+    prefix: &'static str,
+    color_message: bool,
 }
 
-pub fn log_message(log_type: LogType, message: &'static str) {
-    let style = match log_type {
-        LogType::Info => LogStyle {
+impl LogStyle {
+    pub fn default() -> Self {
+        Self {
+            color: Color::White,
+            prefix: "[LOG] ",
+            color_message: false,
+        }
+    }
+
+    pub fn info() -> Self {
+        Self {
             color: Color::White,
             prefix: "[INFO] ",
             color_message: false,
-        },
-        LogType::Warning => LogStyle {
+        }
+    }
+
+    pub fn warning() -> Self {
+        Self {
             color: Color::Yellow,
             prefix: "[WARNING] ",
             color_message: false,
-        },
-        LogType::Error => LogStyle {
+        }
+    }
+
+    pub fn error() -> Self {
+        Self {
             color: Color::Red,
             prefix: "[ERROR] ",
             color_message: false,
-        },
-        LogType::Fatal => LogStyle {
+        }
+    }
+
+    pub fn fatal() -> Self {
+        Self {
             color: Color::DarkRed,
             prefix: "[FATAL] ",
             color_message: true,
-        },
+        }
+    }
+}
+
+pub struct LogStyleBuilder {
+    style: LogStyle,
+}
+
+impl LogStyleBuilder {
+    pub fn new() -> Self {
+        Self {
+            style: LogStyle::default(),
+        }
+    }
+
+    pub fn from(style: LogStyle) -> Self {
+        Self { style }
+    }
+
+    pub fn color(mut self, color: Color) -> Self {
+        self.style.color = color;
+
+        self
+    }
+
+    pub fn prefix(mut self, prefix: &'static str) -> Self {
+        self.style.prefix = prefix;
+
+        self
+    }
+
+    pub fn color_message(mut self, color_message: bool) -> Self {
+        self.style.color_message = color_message;
+
+        self
+    }
+
+    pub fn build(self) -> LogStyle {
+        self.style
+    }
+}
+
+pub fn log_message(log_type: LogType, message: &'static str) {
+    println!("{}", build_log_string(log_type, message));
+}
+
+fn build_log_string(log_type: LogType, message: &'static str) -> String {
+    let style = match log_type {
+        LogType::Info => LogStyle::info(),
+        LogType::Warning => LogStyle::warning(),
+        LogType::Error => LogStyle::error(),
+        LogType::Fatal => LogStyle::fatal(),
         LogType::Custom(style) => style,
     };
 
@@ -50,7 +118,7 @@ pub fn log_message(log_type: LogType, message: &'static str) {
         str.push_str(message);
     }
 
-    println!("{}", str);
+    return str;
 }
 
 #[macro_export]

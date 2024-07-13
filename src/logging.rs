@@ -95,11 +95,11 @@ impl LogStyleBuilder {
     }
 }
 
-pub fn log_message(log_type: LogType, message: &'static str) {
+pub fn log_message(log_type: LogType, message: &str) {
     println!("{}", build_log_string(log_type, message));
 }
 
-fn build_log_string(log_type: LogType, message: &'static str) -> String {
+fn build_log_string(log_type: LogType, message: &str) -> String {
     let style = match log_type {
         LogType::Info => LogStyle::info(),
         LogType::Warning => LogStyle::warning(),

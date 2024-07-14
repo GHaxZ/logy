@@ -15,15 +15,17 @@ pub struct LogStyle {
     color_message: bool,
 }
 
-impl LogStyle {
-    pub fn default() -> Self {
+impl Default for LogStyle {
+    fn default() -> Self {
         Self {
             color: Color::White,
             prefix: "[LOG] ",
             color_message: false,
         }
     }
+}
 
+impl LogStyle {
     pub fn info() -> Self {
         Self {
             color: Color::White,
@@ -118,7 +120,7 @@ fn build_log_string(log_type: LogType, message: &str) -> String {
         str.push_str(message);
     }
 
-    return str;
+    str
 }
 
 #[macro_export]

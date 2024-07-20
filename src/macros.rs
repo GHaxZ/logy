@@ -29,6 +29,6 @@ macro_rules! error {
 #[macro_export]
 macro_rules! fatal {
     ($msg:expr) => {
-        $crate::log!($crate::model::LogType::Error, $msg);
+        $crate::log!($crate::model::LogType::Fatal, $msg);
     };
 }

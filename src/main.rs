@@ -45,6 +45,7 @@ fn main() {
             LogComponent::Spacer,
             LogComponent::Spacer,
             LogComponent::Spacer,
+            LogComponent::Newline,
             LogComponent::Prefix,
         ])
         .build();

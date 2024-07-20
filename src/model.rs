@@ -16,6 +16,7 @@ pub enum LogComponent {
     Message,
     Time,
     Spacer,
+    Newline,
     String(&'static str),
 }
 

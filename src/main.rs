@@ -1,6 +1,6 @@
 use crossterm::style::Color;
 use logy::logger::LOG;
-use logy::model::{LogStyleBuilder, LogType, LoggerBuilder};
+use logy::model::{LogComponent, LogStyleBuilder, LogType, LoggerBuilder};
 use logy::{error, fatal, info, log, warn};
 
 fn main() {
@@ -22,7 +22,7 @@ fn main() {
                     g: 0,
                     b: 233
                 })
-                .prefix("*** WOW *** ")
+                .prefix("*** WOW ***")
                 .color_message(true)
                 .build()
         ),
@@ -31,11 +31,24 @@ fn main() {
 
     // Configure the global Logger
     LOG.lock().unwrap().set_file(false).set_console(true);
-
     info!("The configration for the global logger was just changed!");
 
     // Create and use your own custom Loggers
-    let logger = LoggerBuilder::new().console(true).file(true).build();
+    let logger = LoggerBuilder::new()
+        .console(true)
+        .file(true)
+        .components(vec![
+            LogComponent::Prefix,
+            LogComponent::Spacer,
+            LogComponent::Spacer,
+            LogComponent::Spacer,
+            LogComponent::Message,
+            LogComponent::Spacer,
+            LogComponent::Spacer,
+            LogComponent::Spacer,
+            LogComponent::Prefix,
+        ])
+        .build();
 
     logger.log(
         LogType::Info,

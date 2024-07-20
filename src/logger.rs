@@ -1,15 +1,16 @@
-use std::sync::Mutex;
+use std::{sync::Mutex, time::SystemTime};
 
 use crossterm::style::Stylize;
 use once_cell::sync::Lazy;
 
-use crate::model::{LogStyle, LogType};
+use crate::model::{LogComponent, LogStyle, LogType};
 
 pub static LOG: Lazy<Mutex<Logger>> = Lazy::new(|| Mutex::new(Logger::default()));
 
 pub struct Logger {
     pub console: bool,
     pub file: bool,
+    pub components: Vec<LogComponent>,
 }
 
 impl Default for Logger {
@@ -17,6 +18,13 @@ impl Default for Logger {
         Self {
             console: true,
             file: false,
+            components: vec![
+                LogComponent::Time,
+                LogComponent::Spacer,
+                LogComponent::Prefix,
+                LogComponent::Spacer,
+                LogComponent::Message,
+            ],
         }
     }
 }
@@ -34,12 +42,21 @@ impl Logger {
         self
     }
 
+    pub fn set_components(&mut self, components: Vec<LogComponent>) -> &mut Self {
+        self.components = components;
+
+        self
+    }
+
     pub fn log(&self, log_type: LogType, message: &str) {
-        println!("{}", build_log_string(log_type, message));
+        println!(
+            "{}",
+            build_log_string(self.components.clone(), log_type, message)
+        );
     }
 }
 
-fn build_log_string(log_type: LogType, message: &str) -> String {
+fn build_log_string(components: Vec<LogComponent>, log_type: LogType, message: &str) -> String {
     let style = match log_type {
         LogType::Info => LogStyle::info(),
         LogType::Warning => LogStyle::warning(),
@@ -50,13 +67,24 @@ fn build_log_string(log_type: LogType, message: &str) -> String {
 
     let mut str = String::new();
 
-    str.push_str(&style.prefix.with(style.color).to_string());
-
-    if style.color_message {
-        str.push_str(&message.with(style.color).to_string());
-    } else {
-        str.push_str(message);
+    for component in components.into_iter() {
+        str.push_str(get_component_str(component, style, message).as_str());
     }
 
     str
+}
+
+fn get_component_str(log_component: LogComponent, log_style: LogStyle, message: &str) -> String {
+    match log_component {
+        LogComponent::Prefix => log_style.prefix.with(log_style.color).to_string(),
+        LogComponent::Message => {
+            if log_style.color_message {
+                message.with(log_style.color).to_string()
+            } else {
+                message.to_string()
+            }
+        }
+        LogComponent::Time => format!("{:?}", SystemTime::now()),
+        LogComponent::Spacer => " ".to_string(),
+    }
 }

@@ -10,7 +10,15 @@ pub enum LogType {
     Custom(LogStyle),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
+pub enum LogComponent {
+    Prefix,
+    Message,
+    Time,
+    Spacer,
+}
+
+#[derive(Clone, Copy)]
 pub struct LogStyle {
     pub color: Color,
     pub prefix: &'static str,
@@ -21,7 +29,7 @@ impl Default for LogStyle {
     fn default() -> Self {
         Self {
             color: Color::White,
-            prefix: "[LOG] ",
+            prefix: "[LOG]",
             color_message: false,
         }
     }
@@ -31,7 +39,7 @@ impl LogStyle {
     pub fn info() -> Self {
         Self {
             color: Color::White,
-            prefix: "[INFO] ",
+            prefix: "[INFO]",
             color_message: false,
         }
     }
@@ -39,7 +47,7 @@ impl LogStyle {
     pub fn warning() -> Self {
         Self {
             color: Color::Yellow,
-            prefix: "[WARNING] ",
+            prefix: "[WARNING]",
             color_message: false,
         }
     }
@@ -47,7 +55,7 @@ impl LogStyle {
     pub fn error() -> Self {
         Self {
             color: Color::Red,
-            prefix: "[ERROR] ",
+            prefix: "[ERROR]",
             color_message: false,
         }
     }
@@ -55,7 +63,7 @@ impl LogStyle {
     pub fn fatal() -> Self {
         Self {
             color: Color::DarkRed,
-            prefix: "[FATAL] ",
+            prefix: "[FATAL]",
             color_message: true,
         }
     }
@@ -80,6 +88,12 @@ impl LoggerBuilder {
 
     pub fn file(mut self, file: bool) -> Self {
         self.logger.file = file;
+
+        self
+    }
+
+    pub fn components(mut self, components: Vec<LogComponent>) -> Self {
+        self.logger.components = components;
 
         self
     }

@@ -1,4 +1,6 @@
-use crossterm::style::{Color, Stylize};
+use crossterm::style::Color;
+
+use crate::logger::Logger;
 
 pub enum LogType {
     Info,
@@ -10,9 +12,9 @@ pub enum LogType {
 
 #[derive(Clone)]
 pub struct LogStyle {
-    color: Color,
-    prefix: &'static str,
-    color_message: bool,
+    pub color: Color,
+    pub prefix: &'static str,
+    pub color_message: bool,
 }
 
 impl Default for LogStyle {
@@ -59,6 +61,34 @@ impl LogStyle {
     }
 }
 
+pub struct LoggerBuilder {
+    logger: Logger,
+}
+
+impl LoggerBuilder {
+    pub fn new() -> Self {
+        Self {
+            logger: Logger::default(),
+        }
+    }
+
+    pub fn console(mut self, console: bool) -> Self {
+        self.logger.console = console;
+
+        self
+    }
+
+    pub fn file(mut self, file: bool) -> Self {
+        self.logger.file = file;
+
+        self
+    }
+
+    pub fn build(self) -> Logger {
+        self.logger
+    }
+}
+
 pub struct LogStyleBuilder {
     style: LogStyle,
 }
@@ -95,65 +125,4 @@ impl LogStyleBuilder {
     pub fn build(self) -> LogStyle {
         self.style
     }
-}
-
-pub fn log_message(log_type: LogType, message: &str) {
-    println!("{}", build_log_string(log_type, message));
-}
-
-fn build_log_string(log_type: LogType, message: &str) -> String {
-    let style = match log_type {
-        LogType::Info => LogStyle::info(),
-        LogType::Warning => LogStyle::warning(),
-        LogType::Error => LogStyle::error(),
-        LogType::Fatal => LogStyle::fatal(),
-        LogType::Custom(style) => style,
-    };
-
-    let mut str = String::new();
-
-    str.push_str(&style.prefix.with(style.color).to_string());
-
-    if style.color_message {
-        str.push_str(&message.with(style.color).to_string());
-    } else {
-        str.push_str(message);
-    }
-
-    str
-}
-
-#[macro_export]
-macro_rules! info {
-    ($message:expr) => {
-        $crate::logging::log_message($crate::logging::LogType::Info, $message);
-    };
-}
-
-#[macro_export]
-macro_rules! warning {
-    ($message:expr) => {
-        $crate::logging::log_message($crate::logging::LogType::Warning, $message);
-    };
-}
-
-#[macro_export]
-macro_rules! error {
-    ($message:expr) => {
-        $crate::logging::log_message($crate::logging::LogType::Error, $message);
-    };
-}
-
-#[macro_export]
-macro_rules! fatal {
-    ($message:expr) => {
-        $crate::logging::log_message($crate::logging::LogType::Fatal, $message);
-    };
-}
-
-#[macro_export]
-macro_rules! log {
-    ($style:expr, $message:expr) => {
-        $crate::logging::log_message($style, $message);
-    };
 }

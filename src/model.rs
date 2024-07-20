@@ -16,6 +16,7 @@ pub enum LogComponent {
     Message,
     Time,
     Spacer,
+    String(&'static str),
 }
 
 #[derive(Clone, Copy)]

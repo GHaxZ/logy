@@ -86,5 +86,6 @@ fn get_component_str(log_component: LogComponent, log_style: LogStyle, message: 
         }
         LogComponent::Time => format!("{:?}", SystemTime::now()),
         LogComponent::Spacer => " ".to_string(),
+        LogComponent::String(s) => s.to_string(),
     }
 }

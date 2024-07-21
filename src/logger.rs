@@ -1,5 +1,6 @@
 use std::{sync::Mutex, time::SystemTime};
 
+use chrono::Local;
 use crossterm::style::Stylize;
 use once_cell::sync::Lazy;
 
@@ -84,7 +85,7 @@ fn get_component_str(log_component: LogComponent, log_style: LogStyle, message: 
                 message.to_string()
             }
         }
-        LogComponent::Time => format!("{:?}", SystemTime::now()),
+        LogComponent::Time => Local::now().format("%H:%M:%S").to_string(),
         LogComponent::Spacer => " ".to_string(),
         LogComponent::Newline => "\n".to_string(),
         LogComponent::String(s) => s.to_string(),

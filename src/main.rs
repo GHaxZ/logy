@@ -39,6 +39,7 @@ fn main() {
         .file(true)
         .components(vec![
             LogComponent::Prefix,
+            LogComponent::Spacer,
             LogComponent::String("->"),
             LogComponent::Spacer,
             LogComponent::Message,

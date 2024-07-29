@@ -9,6 +9,7 @@ use once_cell::sync::Lazy;
 use crate::model::{LogComponent, LogStyle, LogType};
 
 pub static LOG: Lazy<Mutex<Logger>> = Lazy::new(|| Mutex::new(Logger::default()));
+
 pub struct Logger {
     pub console: bool,
     pub file: bool,
@@ -38,7 +39,6 @@ impl Default for Logger {
 impl Logger {
     pub fn set_console(&mut self, console: bool) -> &mut Self {
         self.console = console;
-
         self
     }
 
@@ -58,15 +58,12 @@ impl Logger {
 
     pub fn set_components(&mut self, components: Vec<LogComponent>) -> &mut Self {
         self.components = components;
-
         self
     }
 
     pub fn log(&self, log_type: LogType, message: &str) {
-        let log_string = format!(
-            "{}",
-            build_log_string(self.components.clone(), log_type, message)
-        );
+        let log_string_console = build_log_string(&self.components, &log_type, message, true);
+        let log_string_file = build_log_string(&self.components, &log_type, message, false);
 
         if self.file {
             let mut file_handle = self.output_file_handle.lock().unwrap();
@@ -86,41 +83,57 @@ impl Logger {
             }
 
             if let Some(ref mut log_file) = *file_handle {
-                if let Err(e) = writeln!(log_file, "{log_string}") {
+                if let Err(e) = writeln!(log_file, "{}", log_string_file) {
                     eprintln!("Failed to write to log file: {}", e);
                 }
             }
         }
 
         if self.console {
-            println!("{}", log_string);
+            println!("{}", log_string_console);
         }
     }
 }
 
-fn build_log_string(components: Vec<LogComponent>, log_type: LogType, message: &str) -> String {
+fn build_log_string(
+    components: &Vec<LogComponent>,
+    log_type: &LogType,
+    message: &str,
+    with_color: bool,
+) -> String {
     let style = match log_type {
         LogType::Info => LogStyle::info(),
         LogType::Warning => LogStyle::warning(),
         LogType::Error => LogStyle::error(),
         LogType::Fatal => LogStyle::fatal(),
-        LogType::Custom(style) => style,
+        LogType::Custom(style) => style.clone(),
     };
 
     let mut str = String::new();
 
-    for component in components.into_iter() {
-        str.push_str(get_component_str(component, style, message).as_str());
+    for component in components.iter() {
+        str.push_str(&get_component_str(component, &style, message, with_color));
     }
 
     str
 }
 
-fn get_component_str(log_component: LogComponent, log_style: LogStyle, message: &str) -> String {
+fn get_component_str(
+    log_component: &LogComponent,
+    log_style: &LogStyle,
+    message: &str,
+    with_color: bool,
+) -> String {
     match log_component {
-        LogComponent::Prefix => log_style.prefix.with(log_style.color).to_string(),
+        LogComponent::Prefix => {
+            if with_color {
+                log_style.prefix.with(log_style.color).to_string()
+            } else {
+                log_style.prefix.to_string()
+            }
+        }
         LogComponent::Message => {
-            if log_style.color_message {
+            if with_color && log_style.color_message {
                 message.with(log_style.color).to_string()
             } else {
                 message.to_string()

@@ -83,19 +83,25 @@ impl LoggerBuilder {
     }
 
     pub fn console(mut self, console: bool) -> Self {
-        self.logger.console = console;
+        self.logger.set_console(console);
 
         self
     }
 
     pub fn file(mut self, file: bool) -> Self {
-        self.logger.file = file;
+        self.logger.set_file(file);
+
+        self
+    }
+
+    pub fn output_file(mut self, output_file: &'static str) -> Self {
+        self.logger.set_output_file(output_file);
 
         self
     }
 
     pub fn components(mut self, components: Vec<LogComponent>) -> Self {
-        self.logger.components = components;
+        self.logger.set_components(components);
 
         self
     }

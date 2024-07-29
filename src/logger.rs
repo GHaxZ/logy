@@ -1,4 +1,6 @@
-use std::{sync::Mutex, time::SystemTime};
+use std::fs::File;
+use std::io::Write;
+use std::{fs::OpenOptions, sync::Mutex};
 
 use chrono::Local;
 use crossterm::style::Stylize;
@@ -7,10 +9,11 @@ use once_cell::sync::Lazy;
 use crate::model::{LogComponent, LogStyle, LogType};
 
 pub static LOG: Lazy<Mutex<Logger>> = Lazy::new(|| Mutex::new(Logger::default()));
-
 pub struct Logger {
     pub console: bool,
     pub file: bool,
+    pub output_file: &'static str,
+    output_file_handle: Mutex<Option<File>>,
     pub components: Vec<LogComponent>,
 }
 
@@ -19,6 +22,8 @@ impl Default for Logger {
         Self {
             console: true,
             file: false,
+            output_file: "debug.log",
+            output_file_handle: Mutex::new(None),
             components: vec![
                 LogComponent::Time,
                 LogComponent::Spacer,
@@ -39,7 +44,15 @@ impl Logger {
 
     pub fn set_file(&mut self, file: bool) -> &mut Self {
         self.file = file;
+        if !self.file {
+            let mut file_handle = self.output_file_handle.lock().unwrap();
+            *file_handle = None;
+        }
+        self
+    }
 
+    pub fn set_output_file(&mut self, output_file: &'static str) -> &mut Self {
+        self.output_file = output_file;
         self
     }
 
@@ -50,10 +63,38 @@ impl Logger {
     }
 
     pub fn log(&self, log_type: LogType, message: &str) {
-        println!(
+        let log_string = format!(
             "{}",
             build_log_string(self.components.clone(), log_type, message)
         );
+
+        if self.file {
+            let mut file_handle = self.output_file_handle.lock().unwrap();
+
+            if file_handle.is_none() {
+                // Create the file if it doesn't exist
+                let file = OpenOptions::new()
+                    .write(true)
+                    .append(true)
+                    .create(true)
+                    .open(self.output_file);
+
+                match file {
+                    Ok(f) => *file_handle = Some(f),
+                    Err(e) => eprintln!("Failed opening log file: {}", e),
+                }
+            }
+
+            if let Some(ref mut log_file) = *file_handle {
+                if let Err(e) = writeln!(log_file, "{log_string}") {
+                    eprintln!("Failed to write to log file: {}", e);
+                }
+            }
+        }
+
+        if self.console {
+            println!("{}", log_string);
+        }
     }
 }
 

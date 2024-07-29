@@ -30,13 +30,14 @@ fn main() {
     );
 
     // Configure the global Logger
-    LOG.lock().unwrap().set_file(false).set_console(true);
+    LOG.lock().unwrap().set_console(true).set_file(true);
     info!("The configration for the global logger was just changed!");
 
     // Create and use your own custom Loggers
     let logger = LoggerBuilder::new()
         .console(true)
         .file(true)
+        .output_file("test.log")
         .components(vec![
             LogComponent::Prefix,
             LogComponent::Spacer,

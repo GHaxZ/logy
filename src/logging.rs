@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::Write;
+use std::sync::MutexGuard;
 use std::{fs::OpenOptions, sync::Mutex};
 
 use chrono::Local;
@@ -8,7 +9,7 @@ use once_cell::sync::Lazy;
 
 use crate::model::{LogComponent, LogStyle, LogType};
 
-pub static LOG: Lazy<Mutex<Logger>> = Lazy::new(|| Mutex::new(Logger::default()));
+static LOG: Lazy<Mutex<Logger>> = Lazy::new(|| Mutex::new(Logger::default()));
 
 pub struct Logger {
     pub console: bool,
@@ -16,6 +17,7 @@ pub struct Logger {
     pub output_file: &'static str,
     output_file_handle: Mutex<Option<File>>,
     pub components: Vec<LogComponent>,
+    pub hooks: Vec<Box<dyn Fn(LogType) + Send>>,
 }
 
 impl Default for Logger {
@@ -32,6 +34,7 @@ impl Default for Logger {
                 LogComponent::Spacer,
                 LogComponent::Message,
             ],
+            hooks: vec![],
         }
     }
 }
@@ -58,6 +61,14 @@ impl Logger {
 
     pub fn set_components(&mut self, components: Vec<LogComponent>) -> &mut Self {
         self.components = components;
+        self
+    }
+
+    pub fn add_hook<F>(&mut self, hook: F) -> &mut Self
+    where
+        F: Fn(LogType) + Send + 'static,
+    {
+        self.hooks.push(Box::new(hook));
         self
     }
 
@@ -91,6 +102,10 @@ impl Logger {
 
         if self.console {
             println!("{}", log_string_console);
+        }
+
+        for hook in self.hooks.iter() {
+            hook(log_type.clone());
         }
     }
 }
@@ -144,4 +159,8 @@ fn get_component_str(
         LogComponent::Newline => "\n".to_string(),
         LogComponent::String(s) => s.to_string(),
     }
+}
+
+pub fn logger() -> MutexGuard<'static, Logger> {
+    LOG.lock().unwrap()
 }

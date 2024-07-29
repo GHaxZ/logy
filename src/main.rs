@@ -1,5 +1,5 @@
 use crossterm::style::Color;
-use logy::logger::LOG;
+use logy::logging::logger;
 use logy::model::{LogComponent, LogStyleBuilder, LogType, LoggerBuilder};
 use logy::{error, fatal, info, log, warn};
 
@@ -29,8 +29,11 @@ fn main() {
         "This is my own log type :D"
     );
 
+    // Add a hook which will be called every time something is logged
+    logger().add_hook(|log| println!("This is a hook for a log of type '{:?}'!!!", log));
+
     // Configure the global Logger
-    LOG.lock().unwrap().set_console(true).set_file(true);
+    logger().set_console(true).set_file(true);
     info!("The configration for the global logger was just changed!");
 
     // Create and use your own custom Loggers
@@ -50,6 +53,7 @@ fn main() {
             LogComponent::Newline,
             LogComponent::Prefix,
         ])
+        .add_hook(|log| println!("A log of type {:?} occurred!", log))
         .build();
 
     logger.log(

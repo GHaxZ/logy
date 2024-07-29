@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! log {
     ($type:expr, $msg:expr) => {
-        $crate::logger::LOG.lock().unwrap().log($type, $msg);
+        $crate::logging::logger().log($type, $msg);
     };
 }
 

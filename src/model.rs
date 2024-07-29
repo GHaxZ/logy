@@ -1,7 +1,8 @@
 use crossterm::style::Color;
 
-use crate::logger::Logger;
+use crate::logging::Logger;
 
+#[derive(Clone, Debug)]
 pub enum LogType {
     Info,
     Warning,
@@ -20,7 +21,7 @@ pub enum LogComponent {
     String(&'static str),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct LogStyle {
     pub color: Color,
     pub prefix: &'static str,
@@ -102,6 +103,15 @@ impl LoggerBuilder {
 
     pub fn components(mut self, components: Vec<LogComponent>) -> Self {
         self.logger.set_components(components);
+
+        self
+    }
+
+    pub fn add_hook<F>(mut self, hook: F) -> Self
+    where
+        F: Fn(LogType) + Send + 'static,
+    {
+        self.logger.add_hook(hook);
 
         self
     }

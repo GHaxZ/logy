@@ -30,7 +30,7 @@ fn main() {
     );
 
     // Add a hook which will be called every time something is logged
-    logger().add_hook(|log| println!("This is a hook for a log of type '{:?}'!!!", log));
+    logger().add_hook(|log| println!("This is a hook for a log of type '{:?}'!!!", log.log_type));
 
     // Configure the global Logger
     logger().set_console(true).set_file(true);
@@ -53,11 +53,11 @@ fn main() {
             LogComponent::Newline,
             LogComponent::Prefix,
         ])
-        .add_hook(|log| println!("A log of type {:?} occurred!", log))
+        .add_hook(|log| println!("A log of type '{:?}' occurred!", log.log_type))
         .build();
 
     logger.log(
-        LogType::Info,
+        LogType::Warning,
         "This message was logged using my own custom logger!",
     );
 }

@@ -21,11 +21,18 @@ pub enum LogComponent {
     String(&'static str),
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct LogStyle {
     pub color: Color,
     pub prefix: &'static str,
     pub color_message: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct LogMessage {
+    pub log_type: LogType,
+    pub log_message: String,
+    pub log_style: LogStyle,
 }
 
 impl Default for LogStyle {
@@ -109,7 +116,7 @@ impl LoggerBuilder {
 
     pub fn add_hook<F>(mut self, hook: F) -> Self
     where
-        F: Fn(LogType) + Send + 'static,
+        F: Fn(LogMessage) + Send + 'static,
     {
         self.logger.add_hook(hook);
 

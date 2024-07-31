@@ -1,12 +1,21 @@
+use std::error::Error;
 use std::fs::File;
 use std::io::Write;
+use std::sync::mpsc;
+use std::sync::mpsc::Receiver;
+use std::sync::mpsc::Sender;
+use std::sync::Arc;
 use std::sync::MutexGuard;
+use std::thread;
+use std::thread::JoinHandle;
 use std::{fs::OpenOptions, sync::Mutex};
 
 use chrono::Local;
 use crossterm::style::Stylize;
 use once_cell::sync::Lazy;
 
+use crate::log;
+use crate::model::LogTask;
 use crate::model::{LogComponent, LogMessage, LogStyle, LogType};
 
 pub static LOG: Lazy<Mutex<Logger>> = Lazy::new(|| Mutex::new(Logger::default()));
@@ -14,6 +23,9 @@ pub static LOG: Lazy<Mutex<Logger>> = Lazy::new(|| Mutex::new(Logger::default())
 pub struct Logger {
     pub console: bool,
     pub file: bool,
+    pub threaded: bool,
+    thread_handle: Option<JoinHandle<Result<(), Box<dyn Error + Send>>>>,
+    thread_sender: Option<Sender<LogTask>>,
     pub output_file: &'static str,
     output_file_handle: Mutex<Option<File>>,
     pub components: Vec<LogComponent>,
@@ -25,6 +37,9 @@ impl Default for Logger {
         Self {
             console: true,
             file: false,
+            threaded: false,
+            thread_handle: None,
+            thread_sender: None,
             output_file: "debug.log",
             output_file_handle: Mutex::new(None),
             components: vec![
@@ -54,6 +69,43 @@ impl Logger {
         self
     }
 
+    pub fn set_threaded(&mut self, threaded: bool) -> &mut Self {
+        self.threaded = threaded;
+
+        // Initialize the thread when threading is enabled
+        if self.threaded && self.thread_handle.is_none() {
+            // Create the channels for message passing
+            let (tx, rx): (Sender<LogTask>, Receiver<LogTask>) = mpsc::channel();
+
+            // Create the actual executor thread
+            let thread = thread::spawn(move || -> Result<(), Box<dyn Error + Send>> {
+                while let Ok(task) = rx.recv() {
+                    task();
+                }
+                Ok(())
+            });
+
+            self.thread_sender = Some(tx);
+            self.thread_handle = Some(thread);
+        } else if !self.threaded && self.thread_handle.is_some() {
+            self.stop_thread();
+        }
+        self
+    }
+
+    fn stop_thread(&mut self) {
+        if let Some(handle) = self.thread_handle.take() {
+            match handle.join() {
+                Ok(result) => {
+                    if let Err(e) = result {
+                        eprintln!("Thread encountered an error: {}", e);
+                    }
+                }
+                Err(e) => eprintln!("Failed to join log thread: {:?}", e),
+            }
+        }
+    }
+
     pub fn set_output_file(&mut self, output_file: &'static str) -> &mut Self {
         self.output_file = output_file;
         self
@@ -71,6 +123,26 @@ impl Logger {
         self.hooks.push(Box::new(hook));
         self
     }
+
+    //pub fn execute_log(&mut self, log_type: LogType, message: &'static str) {
+    //    if self.threaded {
+    //        let task: LogTask = Box::new(move || {
+    //            log!(log_type.clone(), message);
+    //        });
+    //
+    //        if let Err(e) = self.thread_sender.as_ref().unwrap().send(task) {
+    //            eprintln!(
+    //                "Failed sending logging instructions to other thread, disabling threading."
+    //            );
+    //
+    //            self.set_threaded(false);
+    //        } else {
+    //            return;
+    //        }
+    //    }
+    //
+    //    self.log(log_type, message);
+    //}
 
     pub fn log(&self, log_type: LogType, message: &'static str) {
         let log_message = LogMessage {

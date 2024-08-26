@@ -32,6 +32,14 @@ pub struct Logger {
     pub hooks: Vec<Box<dyn Fn(LogMessage) + Send>>,
 }
 
+impl Drop for Logger {
+    fn drop(&mut self) {
+        if self.threaded {
+            self.set_threaded(false);
+        }
+    }
+}
+
 impl Default for Logger {
     fn default() -> Self {
         Self {
@@ -57,6 +65,7 @@ impl Default for Logger {
 impl Logger {
     pub fn set_console(&mut self, console: bool) -> &mut Self {
         self.console = console;
+
         self
     }
 
@@ -124,25 +133,26 @@ impl Logger {
         self
     }
 
-    //pub fn execute_log(&mut self, log_type: LogType, message: &'static str) {
-    //    if self.threaded {
-    //        let task: LogTask = Box::new(move || {
-    //            log!(log_type.clone(), message);
-    //        });
-    //
-    //        if let Err(e) = self.thread_sender.as_ref().unwrap().send(task) {
-    //            eprintln!(
-    //                "Failed sending logging instructions to other thread, disabling threading."
-    //            );
-    //
-    //            self.set_threaded(false);
-    //        } else {
-    //            return;
-    //        }
-    //    }
-    //
-    //    self.log(log_type, message);
-    //}
+    pub fn execute_log(&mut self, log_type: LogType, message: &'static str) {
+        if self.threaded {
+            let task: LogTask = Box::new(move || {
+                log!(log_type.clone(), message);
+            });
+
+            if let Err(e) = self.thread_sender.as_ref().unwrap().send(task) {
+                eprintln!(
+                    "Failed sending logging instructions to other thread, disabling threading: {}",
+                    e
+                );
+
+                self.set_threaded(false);
+            } else {
+                return;
+            }
+        } else {
+            self.log(log_type, message);
+        }
+    }
 
     pub fn log(&self, log_type: LogType, message: &'static str) {
         let log_message = LogMessage {

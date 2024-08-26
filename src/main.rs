@@ -33,7 +33,7 @@ fn main() {
     logger().add_hook(|log| println!("This is a hook for a log of type '{:?}'!!!", log.log_type));
 
     // Configure the global Logger
-    logger().set_console(true).set_file(true);
+    logger().set_console(true).set_file(true).set_threaded(true);
     info!("The configration for the global logger was just changed!");
 
     // Create and use your own custom Loggers

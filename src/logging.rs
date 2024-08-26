@@ -4,7 +4,6 @@ use std::io::Write;
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::Sender;
-use std::sync::Arc;
 use std::sync::MutexGuard;
 use std::thread;
 use std::thread::JoinHandle;
@@ -15,11 +14,12 @@ use crossterm::style::Stylize;
 use once_cell::sync::Lazy;
 
 use crate::log;
-use crate::model::LogTask;
 use crate::model::{LogComponent, LogMessage, LogStyle, LogType};
 
-pub static LOG: Lazy<Mutex<Logger>> = Lazy::new(|| Mutex::new(Logger::default()));
+static LOG: Lazy<Mutex<Logger>> = Lazy::new(|| Mutex::new(Logger::default()));
+type LogTask = Box<dyn Fn() + Send>;
 
+/// This struct represents a usable instance of a logger
 pub struct Logger {
     pub console: bool,
     pub file: bool,
@@ -72,8 +72,7 @@ impl Logger {
     pub fn set_file(&mut self, file: bool) -> &mut Self {
         self.file = file;
         if !self.file {
-            let mut file_handle = self.output_file_handle.lock().unwrap();
-            *file_handle = None;
+            self.output_file_handle.lock().unwrap().take();
         }
         self
     }

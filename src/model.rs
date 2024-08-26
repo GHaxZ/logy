@@ -2,8 +2,6 @@ use crossterm::style::Color;
 
 use crate::logging::Logger;
 
-pub type LogTask = Box<dyn Fn() + Send>;
-
 #[derive(Clone, Debug)]
 pub enum LogType {
     Info,
@@ -13,7 +11,7 @@ pub enum LogType {
     Custom(LogStyle),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Debug)]
 pub enum LogComponent {
     Prefix,
     Message,

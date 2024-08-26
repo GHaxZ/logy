@@ -31,8 +31,6 @@ Current features:
 - File logging
 - Easy log message styling
 - Custom logging hooks
-
-Planned features:
 - Multithreading functionality
 
 
